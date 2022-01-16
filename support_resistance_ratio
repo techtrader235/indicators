@@ -1,0 +1,78 @@
+//@version=5
+indicator(title="Support Resistence Ratio", shorttitle="SRR", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
+
+min(x, y) =>
+    ret = 0.00
+    if x > y
+        ret := y
+    else
+        ret := x
+    ret
+
+vol(length) =>
+    bVol = 0.00
+    sVol = 0.00
+    for i = 1 to length
+        priceDirection = close[i] - open[i]
+        if (priceDirection > 0)
+            bVol := bVol + volume[i]
+        else
+            sVol := sVol + volume[i]
+    min(bVol / sVol, 4)
+
+ssr(length, mom) =>
+    sSum = 0.01
+    rSum = 0.01
+    ratio = 0.00
+    // eval each bar, determine if it's a support bar or
+    // resistence bar, then sum support resistence values
+    for i = 1 to length
+        priceDirection = close[i] - open[i]
+        if (priceDirection > 0)
+            bTail = low[i] - open[i]
+            tTail = close[i] - high[i]
+            if (bTail > tTail)
+                sSum := sSum + (close[i] - low[i])
+            if (tTail > bTail)
+                rSum := rSum + (high[i] - open[i])
+        if (priceDirection < 0)
+            bTail = low[i] - close[i]
+            tTail = open[i] - high[i]
+            if (bTail > tTail)
+                sSum := sSum + (open[i] - low[i])
+            if (tTail > bTail)
+                rSum := rSum + (high[i] - close[i])
+    // determine ratio
+    ratio := (sSum / length) / (rSum / length)
+    // use momentum to indicate price direction over period
+    // if momentum is negative, turn indicator negative
+    // if (mom < 0)
+    //    ratio := ratio - (ratio * 2)
+    min(ratio, 4)
+
+    
+// inputs from settings
+ssrLengthInput = input.int(14, minval=2, title="Support Resistence Period", group="SRR Settings")
+volLengthInput = input.int(21, minval=2, title="Volume Ratio Period", group="SRR Settings")
+
+// determine price momentum
+momentumShort = close[1] - open[volLengthInput + 1]
+momentumLong = close[1] - open[ssrLengthInput + 1]
+
+// plot ssr ratio
+plot(ssr(ssrLengthInput, momentumLong), "SR Ratio", color=#f70000)
+// plot vol ratio
+plot(vol(volLengthInput), style=plot.style_columns, title="Volume Ratio", color=#000000, transp=80)
+
+// plot boundaries
+hline(0, "SSRatio Bottom Line", color=color.new(#787B86, 0))
+hline(0.50, "SSRatio Double Resistance Line", color=color.new(#787B86, 0.50))
+hline(2, "SSRatio Double Support Line", color=color.new(#787B86, 2))
+
+ssrSupUpper = hline(4, "SSR Support Upper", color=#787B86)
+ssrSupLower = hline(1, "SSR Support Lower", color=#787B86)
+fill(ssrSupUpper, ssrSupLower, color=color.rgb(56, 255, 143, 90), title="SSR Support Background")
+
+ssrResUpper = hline(1, "SSR Resistence Upper", color=#787B86)
+ssrResLower = hline(0, "SSR Resistence Lower", color=#787B86)
+fill(ssrResUpper, ssrResLower, color=color.rgb(255, 120, 120, 90), title="SSR Resistence Background")
