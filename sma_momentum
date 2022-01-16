@@ -1,0 +1,45 @@
+//@version=5
+indicator(title="SMA Momentum", shorttitle="SMAMom", format=format.price, precision=2, timeframe="", timeframe_gaps=true)
+
+max(x, y) =>
+    ret = 0.00
+    if x > y
+        ret := y
+    else
+        ret := x
+    ret
+
+mom(length) =>
+    sumMom = 0.00
+    for i = 1 to length
+        momentum = close - open[i - max(0, length)]
+        sumMom := sumMom + momentum
+    sumMom / length
+
+// inputs from settings
+momShortInput = input.int(50, minval=2, title="Short SMA Momentum", group="SMA Momentum Settings")
+momLongInput = input.int(200, minval=2, title="Long SMA Momentum", group="SMA Momentum Settings")
+
+
+// determine short momentum
+shortMom = close - open[momShortInput]
+// determine long momentum
+longMom = close - open[momLongInput]
+
+
+// plot short momentum average
+plot(mom(momShortInput), style=plot.style_columns, title="Short SMA Momentum", color=#99DDFF, transp=50)
+plot(mom(momShortInput), style=plot.style_line, title="Short SMA Momentum", color=#99DDFF, transp=0)
+// plot long momentum average
+plot(mom(momLongInput), style=plot.style_columns, title="Long SMA Momentum", color=#FFB3FF, transp=50)
+plot(mom(momLongInput), style=plot.style_line, title="Long SMA Momentum", color=#FFB3FF, transp=0)
+
+
+// splot short momentum
+plot(shortMom, "Short Momentum", color=#1919FF)
+// plot long momentum
+plot(longMom, "Long Momentum", color=#FF19FF)
+
+
+// plot boundaries
+hline(0, "Momentum Mid Line", color=color.new(#787B86, 0))
